@@ -21,6 +21,7 @@ void TileMap::loadFromFile(std::string fileName, int windowWidth) {
 			Tile tile;
 			tile.setPosition(sf::Vector2f(x*tileWidth, y*tileWidth));
 			tile.setTexture(tileSet.getTexture(tileValue));
+			tile.setSolid(tileSet.isSolid(tileValue));
 			int tileScale = tileWidth/tile.getTexture()->getSize().x;
 			tile.setScale(sf::Vector2f(tileScale, tileScale));
 			tiles.back().push_back(tile);
