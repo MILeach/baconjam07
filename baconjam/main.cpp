@@ -7,7 +7,12 @@ int main() {
     sf::CircleShape shape(100.f);
 	shape.setFillColor(sf::Color::Blue);
 
-	TileMap map("testmap.txt");
+	TileMap map;
+	TileSet tileSet;
+	tileSet.addTexture("tile1.png");
+	tileSet.addTexture("water.png");
+	map.setTileSet(tileSet);
+	map.loadFromFile("testmap.txt", window.getSize().x);
 
     while (window.isOpen()) {
         sf::Event event;
@@ -29,7 +34,7 @@ int main() {
         }
 
         window.clear();
-        window.draw(shape);
+		map.drawToWindow(window);
         window.display();
     }
 
