@@ -12,7 +12,7 @@ class Player : public sf::Sprite {
 		Player();
 		Player(const sf::Vector2f& startPosition, const std::string& fileName);
 		~Player();
-		void update(TileMap& map);
+		void update(TileMap& map, float frameTime);
 		void setMovingUp	(const bool& moving);
 		void setMovingDown	(const bool& moving);
 		void setMovingLeft	(const bool& moving);
@@ -20,6 +20,8 @@ class Player : public sf::Sprite {
 
 	private:
 		bool movingUp, movingDown, movingLeft, movingRight;
+		sf::Texture texture;
+		float speed;
 };
 
 #endif

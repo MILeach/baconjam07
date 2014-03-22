@@ -5,7 +5,6 @@ Player::Player() {
 }
 
 Player::Player(const sf::Vector2f& startPosition, const std::string& fileName) {
-	sf::Texture texture;
 	if (!texture.loadFromFile(fileName)) {
 	} else {
 		setTexture(texture);
@@ -14,14 +13,16 @@ Player::Player(const sf::Vector2f& startPosition, const std::string& fileName) {
 	movingUp 	= false;
 	movingDown 	= false;
 	movingLeft 	= false;
-	movingRight 	= false;
+	movingRight = false;
+
+	speed = 150.0f;
 }
 
 Player::~Player() {
 }
 
 
-void Player::update(TileMap& map) {
+void Player::update(TileMap& map, float frameTime) {
 	sf::Vector2f initialPosition = getPosition();
 
 	sf::Vector2f velocity(0.0f, 0.0f);
@@ -39,15 +40,15 @@ void Player::update(TileMap& map) {
 	if (velocity.x != 0.0f && velocity.y != 0.0f)
 		scale = sqrt(velocity.x*velocity.x + velocity.y*velocity.y);
 	velocity /= scale;
-	move(velocity);
+	move(velocity*frameTime*speed);
 
 	// Check if we are colliding
 	std::vector<std::vector<Tile>> tiles = map.getTiles();
 	// Convert position to tile numbers
 	sf::Vector2f newPosition = getPosition();
 	// TODO: get rid of magic constant
-	int tilex = floor(newPosition.x+10)/32;
-	int tiley = floor(newPosition.y+10)/32;
+	int tilex = floor(newPosition.x+25)/32;
+	int tiley = floor(newPosition.y+16)/32;
 	if (tiles[tiley][tilex].isSolid())
 		setPosition(initialPosition);
 }
