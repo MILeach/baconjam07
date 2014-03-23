@@ -19,6 +19,10 @@ int main() {
 	float cycleTimer = 0.0f;
 	bool gameRunning = false;
 
+	sf::Image icon;
+	icon.loadFromFile("icon.png");
+	window.setIcon(64, 64, icon.getPixelsPtr());
+
 	std::vector<sf::Vector2f> cbspawns;
 	cbspawns.push_back(sf::Vector2f(-60.0f, -60.0f));
 	cbspawns.push_back(sf::Vector2f(400.0f, -60.0f));
