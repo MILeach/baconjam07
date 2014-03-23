@@ -8,6 +8,11 @@ class CheeseBurglar : public sf::Sprite {
 		CheeseBurglar();
 		~CheeseBurglar();
 		void update(sf::Vector2f nearestTarget, float frameTime);
+		void markForRemoval();
+		bool isMarkedForRemoval();
+
+	private:
+		bool markedForRemoval;
 };
 
 #endif

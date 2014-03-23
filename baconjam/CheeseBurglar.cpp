@@ -3,6 +3,7 @@
 #include <SFML/Graphics.hpp>
 
 CheeseBurglar::CheeseBurglar() {
+	markedForRemoval = false;
 }
 
 CheeseBurglar::~CheeseBurglar() {
@@ -13,4 +14,12 @@ void CheeseBurglar::update(sf::Vector2f nearestTarget, float frameTime) {
 	float scale = sqrt(target.x*target.x + target.y*target.y);
 	target /= scale;
 	move(target*frameTime*100.0f);
+}
+
+void CheeseBurglar::markForRemoval() {
+	markedForRemoval = true;
+}
+
+bool CheeseBurglar::isMarkedForRemoval() {
+	return markedForRemoval;
 }

@@ -5,6 +5,7 @@
 #include "Player.h"
 #include "CheeseBurglar.h"
 #include "KetchupPickup.h"
+#include "KetchupPuddle.h"
 
 int main() {
 
@@ -55,7 +56,7 @@ int main() {
 
 	const int MAX_KETCHUPS = 5;
 	int ketchups = MAX_KETCHUPS;
-	std::vector<sf::Sprite> ketchup;
+	std::vector<KetchupPuddle> ketchup;
 	sf::Texture ketchupTexture;
 	ketchupTexture.loadFromFile("ketchup.png");
 		
@@ -151,6 +152,9 @@ int main() {
 		sf::String scoreText = "Points: " + std::to_string(score);
 		pointsText.setString(scoreText);
 	}
+
+		// Remove cheeseburglars who were marked last frame
+	cheeseBurglars.erase(std::remove_if(std::begin(cheeseBurglars), std::end(cheeseBurglars), [] (CheeseBurglar& c) { return c.isMarkedForRemoval(); }), std::end(cheeseBurglars));
 		player.update(map, frameTime);
 		for (auto &cb : cheeseBurglars) {
 			// Calculate nearest target
@@ -159,10 +163,14 @@ int main() {
 			float diffsize = diff.x*diff.x + diff.y*diff.y;
 			for (auto &k : ketchup) {
 				sf::Vector2f kdiff = cb.getPosition() - k.getPosition();
+				kdiff.x += 16;
+				kdiff.y += 25;
 				float kdiffsize = kdiff.x*kdiff.x + kdiff.y*kdiff.y;
 				if (kdiffsize <= diffsize) {
 					diffsize = kdiffsize;
 					nearest  = k.getPosition();
+					if (kdiffsize < 400)
+						k.startCountdown();
 				}
 			}
 			
@@ -176,6 +184,19 @@ int main() {
 		for (auto &k : ketchup) {
 			if (k.getScale().x < 1.0f)
 			k.scale(1.1f, 1.1f);
+			// Ketchup puddle has been eaten
+			k.update(frameTime);
+			if (k.isFinished()) {
+				// Remove nearby cheeseburglars
+				for (auto &cb : cheeseBurglars) {
+					sf::Vector2f kdiff = cb.getPosition() - k.getPosition();
+					kdiff.x += 16;
+					kdiff.y += 25;
+					float kdiffsize = kdiff.x*kdiff.x + kdiff.y*kdiff.y;
+					if (kdiffsize < 400)
+						cb.markForRemoval();	
+				}	
+			}
 		}
 		for (auto &kp : ketchupPickups) {
 			sf::Vector2f playerPos = player.getPosition();
