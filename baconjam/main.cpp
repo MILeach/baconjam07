@@ -14,6 +14,18 @@ int main() {
 	sf::Clock clock;
 	unsigned long int score = 0;
 	float scoreTimer = 0.0f;
+	float timeElapsed = 0.0f;
+	float cycleTimer = 0.0f;
+
+	std::vector<sf::Vector2f> cbspawns;
+	cbspawns.push_back(sf::Vector2f(-60.0f, -60.0f));
+	cbspawns.push_back(sf::Vector2f(400.0f, -60.0f));
+	cbspawns.push_back(sf::Vector2f(860.0f, -60.0f));
+	cbspawns.push_back(sf::Vector2f(860.0f, 300.0f));
+	cbspawns.push_back(sf::Vector2f(860.0f, 660.0f));
+	cbspawns.push_back(sf::Vector2f(400.0f, 660.0f));
+	cbspawns.push_back(sf::Vector2f(-60.0f, 660.0f));
+	cbspawns.push_back(sf::Vector2f(-60.0f, 300.0f));
 
 	std::vector<CheeseBurglar> cheeseBurglars;
 	sf::Texture cbTexture;
@@ -83,18 +95,22 @@ int main() {
 			case sf::Event::KeyPressed:
 				switch (event.key.code) {
 					case sf::Keyboard::W:
+					case sf::Keyboard::Up:
 						player.setMovingUp(true);
 						break;
 
 					case sf::Keyboard::S:
+					case sf::Keyboard::Down:
 						player.setMovingDown(true);
 						break;
 
 					case sf::Keyboard::D:
+					case sf::Keyboard::Right:
 						player.setMovingRight(true);
 						break;
 
 					case sf::Keyboard::A:
+					case sf::Keyboard::Left:
 						player.setMovingLeft(true);
 						break;
 
@@ -120,18 +136,22 @@ int main() {
 				case sf::Event::KeyReleased:
 					switch (event.key.code) {
 					case sf::Keyboard::W:
+					case sf::Keyboard::Up:
 						player.setMovingUp(false);
 						break;
 					
 					case sf::Keyboard::S:
+					case sf::Keyboard::Down:
 						player.setMovingDown(false);
 						break;
 
 					case sf::Keyboard::D:
+					case sf::Keyboard::Right:
 						player.setMovingRight(false);
 						break;
 
 					case sf::Keyboard::A:
+					case sf::Keyboard::Left:
 						player.setMovingLeft(false);
 						break;
 
@@ -144,99 +164,124 @@ int main() {
 				break;
 			}
         }
-	float frameTime = clock.restart().asSeconds();
-	scoreTimer += frameTime;
-	if(scoreTimer > 0.05f) {
-		score += (1+ketchups)*5;
-		scoreTimer -= 0.05f;
-		sf::String scoreText = "Points: " + std::to_string(score);
-		pointsText.setString(scoreText);
-	}
 
-		// Remove cheeseburglars who were marked last frame
-	cheeseBurglars.erase(std::remove_if(std::begin(cheeseBurglars), std::end(cheeseBurglars), [] (CheeseBurglar& c) { return c.isMarkedForRemoval(); }), std::end(cheeseBurglars));
-		player.update(map, frameTime);
-		for (auto &cb : cheeseBurglars) {
-			// Calculate nearest target
-			sf::Vector2f nearest = player.getPosition();
-			sf::Vector2f diff = cb.getPosition() - player.getPosition();
-			float diffsize = diff.x*diff.x + diff.y*diff.y;
-			for (auto &k : ketchup) {
-				sf::Vector2f kdiff = cb.getPosition() - k.getPosition();
-				kdiff.x += 16;
-				kdiff.y += 25;
-				float kdiffsize = kdiff.x*kdiff.x + kdiff.y*kdiff.y;
-				if (kdiffsize <= diffsize) {
-					diffsize = kdiffsize;
-					nearest  = k.getPosition();
-					if (kdiffsize < 400)
-						k.startCountdown();
-				}
-			}
-			
-			cb.update(sf::Vector2f(nearest.x-16, nearest.y-25), frameTime);
-			// Check if the player has been caught
-			diff = cb.getPosition() - player.getPosition();
-			if ((diff.x*diff.x + diff.y*diff.y) < 30)
-				player.setPosition(0, 0);
-			
+
+	float frameTime = clock.restart().asSeconds();
+	cycleTimer += frameTime;
+
+	if (cycleTimer > 1/100.0f) {
+		cycleTimer -= 1/100.0f;
+		timeElapsed += 1/100.0f;
+		scoreTimer += 1/100.0f;
+		if(scoreTimer > 0.05f) {
+			score += (1+ketchups)*5;
+			scoreTimer -= 0.05f;
+			sf::String scoreText = "Points: " + std::to_string(score);
+			pointsText.setString(scoreText);
 		}
-		for (auto &k : ketchup) {
-			if (k.getScale().x < 1.0f)
-			k.scale(1.1f, 1.1f);
-			// Ketchup puddle has been eaten
-			k.update(frameTime);
-			if (k.isFinished()) {
-				// Remove nearby cheeseburglars
-				for (auto &cb : cheeseBurglars) {
+
+			// Remove cheeseburglars who were marked last frame
+			int prevSize = cheeseBurglars.size();
+			cheeseBurglars.erase(std::remove_if(std::begin(cheeseBurglars), std::end(cheeseBurglars), [] (CheeseBurglar& c) { return c.isMarkedForRemoval(); }), std::end(cheeseBurglars));
+			score += (prevSize - cheeseBurglars.size())*100;
+			// Remove expired ketchups
+			ketchup.erase(std::remove_if(std::begin(ketchup), std::end(ketchup), [] (KetchupPuddle& kp) {return kp.isFinished(); }), std::end(ketchup));
+
+			// Spawn new cheeseburglars
+			if (rand() % 1000 > 994-timeElapsed/7.0) {
+				CheeseBurglar newcb;
+				newcb.setTexture(cbTexture);
+				newcb.setPosition(cbspawns[rand()%8]);
+				cheeseBurglars.push_back(newcb);
+			}
+
+			player.update(map, 1/100.0f);
+			for (auto &cb : cheeseBurglars) {
+				// Calculate nearest target
+				sf::Vector2f nearest = player.getPosition();
+				sf::Vector2f diff = cb.getPosition() - player.getPosition();
+				float diffsize = diff.x*diff.x + diff.y*diff.y;
+				for (auto &k : ketchup) {
 					sf::Vector2f kdiff = cb.getPosition() - k.getPosition();
 					kdiff.x += 16;
 					kdiff.y += 25;
 					float kdiffsize = kdiff.x*kdiff.x + kdiff.y*kdiff.y;
-					if (kdiffsize < 400)
-						cb.markForRemoval();	
-				}	
+					if (kdiffsize <= diffsize) {
+						diffsize = kdiffsize;
+						nearest  = k.getPosition();
+						if (kdiffsize < 400)
+							k.startCountdown();
+					}
+				}
+				if (nearest == player.getPosition())
+					cb.update(sf::Vector2f(nearest.x+25-16, nearest.y+16-25), 1/100.0f);
+				else
+					cb.update(sf::Vector2f(nearest.x - 16, nearest.y - 25), 1/100.0f);
+				// Check if the player has been caught
+				diff = player.getPosition() - cb.getPosition();
+				diff.x += 9;
+				diff.y -= 9;
+				if ((diff.x*diff.x + diff.y*diff.y) < 60)
+					player.setPosition(0, 0);
+			
 			}
-		}
-		for (auto &kp : ketchupPickups) {
-			sf::Vector2f playerPos = player.getPosition();
-			playerPos.x += 25;
-			playerPos.y += 16;
-			sf::Vector2f kpPos = kp.getPosition();
-			kpPos.x += 8;
-			kpPos.y += 12;	
-			if (ketchups < 5 && ((playerPos.x-kpPos.x)*(playerPos.x-kpPos.x) + (playerPos.y-kpPos.y)*(playerPos.y-kpPos.y)) < 400) {
-				ketchups += 1;
-				score += 25;
-				sf::String kt = "Ketchup remaining: " + std::to_string(ketchups);
-				ketchupRemainingText.setString(kt);
-				kp.setPosition(-30.0f, -30.0f);
-		}
-		}
+			for (auto &k : ketchup) {
+				if (k.getScale().x < 1.0f)
+				k.scale(1.1f, 1.1f);
+				// Ketchup puddle has been eaten
+				k.update(1/100.0f);
+				if (k.isFinished()) {
+					// Remove nearby cheeseburglars
+					for (auto &cb : cheeseBurglars) {
+						sf::Vector2f kdiff = cb.getPosition() - k.getPosition();
+						kdiff.x += 16;
+						kdiff.y += 25;
+						float kdiffsize = kdiff.x*kdiff.x + kdiff.y*kdiff.y;
+						if (kdiffsize < 400)
+							cb.markForRemoval();	
+					}	
+				}
+			}
+			for (auto &kp : ketchupPickups) {
+				sf::Vector2f playerPos = player.getPosition();
+				playerPos.x += 25;
+				playerPos.y += 16;
+				sf::Vector2f kpPos = kp.getPosition();
+				kpPos.x += 8;
+				kpPos.y += 12;	
+				if (ketchups < 5 && ((playerPos.x-kpPos.x)*(playerPos.x-kpPos.x) + (playerPos.y-kpPos.y)*(playerPos.y-kpPos.y)) < 400) {
+					ketchups += 1;
+					score += 25;
+					sf::String kt = "Ketchup remaining: " + std::to_string(ketchups);
+					ketchupRemainingText.setString(kt);
+					kp.setPosition(-30.0f, -30.0f);
+			}
+			}
 
-		// Spawn new ketchup bottles
-		if (rand() % 1000 > 996) {
-			KetchupPickup testkp;
-			testkp.setTexture(ketchupPickupTexture);
-			testkp.setPosition(50+rand()%700, 50+rand()%500);
-			ketchupPickups.push_back(testkp);
-		}
+			// Spawn new ketchup bottles
+			if (rand() % 1000 > 994) {
+				KetchupPickup testkp;
+				testkp.setTexture(ketchupPickupTexture);
+				testkp.setPosition(50+rand()%700, 50+rand()%500);
+				ketchupPickups.push_back(testkp);
+			}
 
-        window.clear();
-		map.drawToWindow(window);
-		for (auto k : ketchup) {
-			window.draw(k);
+			window.clear();
+			map.drawToWindow(window);
+			for (auto k : ketchup) {
+				window.draw(k);
+			}
+			for (auto kp : ketchupPickups) {
+				window.draw(kp);
+			}
+			for (auto cb : cheeseBurglars) {
+				window.draw(cb);
+			}
+			window.draw(player);
+			window.draw(ketchupRemainingText);
+			window.draw(pointsText);
+			window.display();
 		}
-		for (auto kp : ketchupPickups) {
-			window.draw(kp);
-		}
-		for (auto cb : cheeseBurglars) {
-			window.draw(cb);
-		}
-		window.draw(player);
-		window.draw(ketchupRemainingText);
-		window.draw(pointsText);
-        window.display();
     }
 	ketchupSound.stop();
     return 0;
