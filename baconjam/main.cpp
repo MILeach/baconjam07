@@ -59,6 +59,11 @@ int main() {
 	sf::Sound ketchupSound;
 	ketchupSound.setBuffer(buffer);
 
+	sf::Music music;
+	music.openFromFile("baconjam.ogg");
+	music.play();
+	music.setLoop(true);
+
 	sf::Text pointsText;
 	pointsText.setFont(font);
 	pointsText.setString("Points: 0");
@@ -112,6 +117,11 @@ int main() {
 					case sf::Keyboard::A:
 					case sf::Keyboard::Left:
 						player.setMovingLeft(true);
+						break;
+
+					case sf::Keyboard::M:
+						music.setVolume(music.getVolume() == 0 ? 100 : 0);
+						ketchupSound.setVolume(ketchupSound.getVolume() == 0 ? 100 : 0);
 						break;
 
 					case sf::Keyboard::Space:
