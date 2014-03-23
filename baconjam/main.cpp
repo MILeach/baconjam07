@@ -11,6 +11,8 @@ int main() {
     
 	sf::RenderWindow window(sf::VideoMode(800, 600), "Double Bacon Cheeseburglars");
 	sf::Clock clock;
+	unsigned long int score = 0;
+	float scoreTimer = 0.0f;
 
 	std::vector<CheeseBurglar> cheeseBurglars;
 	sf::Texture cbTexture;
@@ -142,7 +144,35 @@ int main() {
 			}
         }
 	float frameTime = clock.restart().asSeconds();
+	scoreTimer += frameTime;
+	if(scoreTimer > 0.05f) {
+		score += (1+ketchups)*5;
+		scoreTimer -= 0.05f;
+		sf::String scoreText = "Points: " + std::to_string(score);
+		pointsText.setString(scoreText);
+	}
 		player.update(map, frameTime);
+		for (auto &cb : cheeseBurglars) {
+			// Calculate nearest target
+			sf::Vector2f nearest = player.getPosition();
+			sf::Vector2f diff = cb.getPosition() - player.getPosition();
+			float diffsize = diff.x*diff.x + diff.y*diff.y;
+			for (auto &k : ketchup) {
+				sf::Vector2f kdiff = cb.getPosition() - k.getPosition();
+				float kdiffsize = kdiff.x*kdiff.x + kdiff.y*kdiff.y;
+				if (kdiffsize <= diffsize) {
+					diffsize = kdiffsize;
+					nearest  = k.getPosition();
+				}
+			}
+			
+			cb.update(sf::Vector2f(nearest.x-16, nearest.y-25), frameTime);
+			// Check if the player has been caught
+			diff = cb.getPosition() - player.getPosition();
+			if ((diff.x*diff.x + diff.y*diff.y) < 30)
+				player.setPosition(0, 0);
+			
+		}
 		for (auto &k : ketchup) {
 			if (k.getScale().x < 1.0f)
 			k.scale(1.1f, 1.1f);
@@ -156,6 +186,7 @@ int main() {
 			kpPos.y += 12;	
 			if (ketchups < 5 && ((playerPos.x-kpPos.x)*(playerPos.x-kpPos.x) + (playerPos.y-kpPos.y)*(playerPos.y-kpPos.y)) < 400) {
 				ketchups += 1;
+				score += 25;
 				sf::String kt = "Ketchup remaining: " + std::to_string(ketchups);
 				ketchupRemainingText.setString(kt);
 				kp.setPosition(-30.0f, -30.0f);

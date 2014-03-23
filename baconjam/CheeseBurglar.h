@@ -7,7 +7,7 @@ class CheeseBurglar : public sf::Sprite {
 	public:
 		CheeseBurglar();
 		~CheeseBurglar();
-		
+		void update(sf::Vector2f nearestTarget, float frameTime);
 };
 
 #endif
